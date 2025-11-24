@@ -1,5 +1,5 @@
 #include <set>
-#include "esphome/core/log.h"
+#include "log.h"
 #include "esphome/core/util.h"
 #include "esphome/core/hal.h"
 #include "util.h"
@@ -29,7 +29,7 @@ namespace esphome
 #define LOG_MESSAGE(message_name, temp, source, dest)                                                             \
     if (debug_log_messages)                                                                                       \
     {                                                                                                             \
-        ESP_LOGW(TAG, "s:%s d:%s " #message_name " %g", source.c_str(), dest.c_str(), static_cast<double>(temp)); \
+        LOGW("s:%s d:%s " #message_name " %g", source.c_str(), dest.c_str(), static_cast<double>(temp)); \
     }
 
         uint16_t crc16(std::vector<uint8_t> &data, int startIndex, int length)
@@ -143,7 +143,7 @@ namespace esphome
             case Structure:
                 if (capacity != 1)
                 {
-                    ESP_LOGE(TAG, "structure messages can only have one message but is %d", capacity);
+                    LOGE("structure messages can only have one message but is %d", capacity);
                     return set;
                 }
                 Buffer buffer;
@@ -156,7 +156,7 @@ namespace esphome
                 set.structure = buffer;
                 break;
             default:
-                ESP_LOGE(TAG, "Unkown type");
+                LOGE("Unkown type");
             }
 
             return set;
@@ -191,7 +191,7 @@ namespace esphome
                 }
                 break;
             default:
-                ESP_LOGE(TAG, "Unkown type");
+                LOGE("Unkown type");
             }
         }
 
@@ -469,10 +469,10 @@ namespace esphome
             if (packet.messages.size() == 0)
                 return;
 
-            ESP_LOGW(TAG, "publish packet %s", packet.to_string().c_str());
+            LOGW("publish packet %s", packet.to_string().c_str());
 
             auto data = packet.encode();
-            target->publish_data(data);
+            target->publish_data(0, std::move(data));
 
             sent_packets.push_back({packet, 0, millis()});
         }
@@ -808,7 +808,7 @@ namespace esphome
             }
         }
 
-        DecodeResult try_decode_nasa_packet(std::vector<uint8_t> data)
+        DecodeResult try_decode_nasa_packet(std::vector<uint8_t> &data)
         {
             return packet_.decode(data);
         }
@@ -890,8 +890,8 @@ namespace esphome
                     info.retry_count++;
                     info.last_sent_time = now;
                     auto data = info.packet.encode();
-                    target->publish_data(data);
-                    ESP_LOGW(TAG, "Resending packet %d number of attempts: %d", info.packet.command.packetNumber, info.retry_count);
+                    target->publish_data(0, std::move(data));
+                    LOGW("Resending packet %d number of attempts: %d", info.packet.command.packetNumber, info.retry_count);
                 }
                 else if (info.retry_count >= 3)
                 {

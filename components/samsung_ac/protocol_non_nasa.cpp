@@ -2,7 +2,7 @@
 #include <map>
 #include <cmath>
 #include <string>
-#include "log.h"
+#include "samsung_ac_log.h"
 #include "esphome/core/hal.h"
 #include "util.h"
 #include "protocol_non_nasa.h"

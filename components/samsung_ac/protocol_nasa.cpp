@@ -1,5 +1,5 @@
 #include <set>
-#include "log.h"
+#include "samsung_ac_log.h"
 #include "esphome/core/util.h"
 #include "esphome/core/hal.h"
 #include "util.h"

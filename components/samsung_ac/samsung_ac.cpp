@@ -1,7 +1,7 @@
 #include "samsung_ac.h"
 #include "debug_mqtt.h"
 #include "util.h"
-#include "log.h"
+#include "samsung_ac_log.h"
 #include <vector>
 
 namespace esphome

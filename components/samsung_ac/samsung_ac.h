@@ -8,7 +8,7 @@
 #include "esphome/components/uart/uart.h"
 #include "samsung_ac_device.h"
 #include "protocol.h"
-#include "log.h"
+#include "samsung_ac_log.h"
 #include "device_state_tracker.h"
 
 namespace esphome

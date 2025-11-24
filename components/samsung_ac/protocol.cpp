@@ -1,6 +1,6 @@
 #include "protocol.h"
 #include "util.h"
-#include "log.h"
+#include "samsung_ac_log.h"
 #include "protocol_nasa.h"
 #include "protocol_non_nasa.h"
 

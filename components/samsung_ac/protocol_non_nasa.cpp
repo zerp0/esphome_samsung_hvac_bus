@@ -252,9 +252,9 @@ namespace esphome
                 // Maximum frequency for Inverter (compressor-motor of outdoor-unit) in Hz
                 commandF3.inverter_max_frequency_hz = data[4];
                 // Sum of required heating/cooling capacity ordered by the indoor-units in kW
-                commandF3.inverter_total_capacity_requirement_kw = (float)data[5];
+                commandF3.inverter_total_capacity_requirement_kw = (float)data[5] / 10;
                 // DC-current to the inverter of outdoor-unit in A
-                commandF3.inverter_current_a = (float)data[8];
+                commandF3.inverter_current_a = (float)data[8] / 10;
                 // voltage of the DC-link to inverter in V
                 commandF3.inverter_voltage_v = (float)data[9] * 2;
                 // Power consumption of the outdoo unit inverter in W

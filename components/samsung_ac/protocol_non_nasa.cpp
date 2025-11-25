@@ -18,6 +18,11 @@ namespace esphome
         std::list<NonNasaRequestQueueItem> nonnasa_requests;
         bool controller_registered = false;
         bool indoor_unit_awake = true;
+        // Timestamp of the last time we attempted controller registration. Used to
+        // slow down repeated registration attempts so we don't spam the outdoor unit.
+        uint32_t last_register_attempt = 0;
+        // Minimum interval between registration attempts (ms).
+        const uint32_t NONNASA_REGISTER_INTERVAL_MS = 5000;
 
         uint8_t build_checksum(std::vector<uint8_t> &data)
         {
@@ -532,7 +537,8 @@ namespace esphome
             };
             data[12] = build_checksum(data);
 
-            // Send now
+            // Record timestamp and send now
+            last_register_attempt = millis();
             target->publish_data(data);
         }
 
@@ -638,8 +644,12 @@ namespace esphome
                 // It's unknown why the first data byte must be odd.
                 if (non_nasa_keepalive)
                 {
-                    delay(30);
-                    send_register_controller(target);
+                    const uint32_t now = millis();
+                    if (now - last_register_attempt > NONNASA_REGISTER_INTERVAL_MS)
+                    {
+                        delay(30);
+                        send_register_controller(target);
+                    }
                 }
             }
         }
@@ -650,7 +660,11 @@ namespace esphome
             // been confirmed by the outdoor unit.
             if (!controller_registered)
             {
-                send_register_controller(target);
+                const uint32_t now_reg = millis();
+                if (now_reg - last_register_attempt > NONNASA_REGISTER_INTERVAL_MS)
+                {
+                    send_register_controller(target);
+                }
             }
 
             // If we have *any* messages in the queue for longer than 15s, assume failure and
@@ -682,7 +696,11 @@ namespace esphome
                     indoor_unit_awake = false;
                     item.retry_count++;
                     ESP_LOGD(TAG, "Device is likely sleeping, waking...");
-                    send_register_controller(target);
+                    if (now - last_register_attempt > NONNASA_REGISTER_INTERVAL_MS)
+                    {
+                        delay(30);
+                        send_register_controller(target);
+                    }
                     break;
                 }
             }

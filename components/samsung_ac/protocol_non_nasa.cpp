@@ -257,8 +257,9 @@ namespace esphome
                 commandF3.inverter_current_a = (float)data[8];
                 // voltage of the DC-link to inverter in V
                 commandF3.inverter_voltage_v = (float)data[9] * 2;
-                // Power consumption of the outdoo unit inverter in W
-                commandF3.inverter_power_w = commandF3.inverter_current_a * commandF3.inverter_voltage_v;
+                // Power consumption of the outdoor unit inverter in W
+                // Measured values are 10x too high; divide by 10 to correct scaling
+                commandF3.inverter_power_w = (commandF3.inverter_current_a * commandF3.inverter_voltage_v) / 10.0f;
                 return DecodeResult::Ok;
             }
             default:

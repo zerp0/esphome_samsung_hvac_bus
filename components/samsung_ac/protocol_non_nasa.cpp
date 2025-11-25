@@ -252,9 +252,9 @@ namespace esphome
                 // Maximum frequency for Inverter (compressor-motor of outdoor-unit) in Hz
                 commandF3.inverter_max_frequency_hz = data[4];
                 // Sum of required heating/cooling capacity ordered by the indoor-units in kW
-                commandF3.inverter_total_capacity_requirement_kw = (float)data[5] / 10;
+                commandF3.inverter_total_capacity_requirement_kw = (float)data[5];
                 // DC-current to the inverter of outdoor-unit in A
-                commandF3.inverter_current_a = (float)data[8] / 10;
+                commandF3.inverter_current_a = (float)data[8];
                 // voltage of the DC-link to inverter in V
                 commandF3.inverter_voltage_v = (float)data[9] * 2;
                 // Power consumption of the outdoo unit inverter in W
@@ -605,6 +605,44 @@ namespace esphome
                    // TODO
                    target->set_swing_horizontal(nonpacket_.src, false);
                    target->set_swing_vertical(nonpacket_.src, false);
+                }
+            }
+            else if (nonpacket_.cmd == NonNasaCommand::CmdC0)
+            {
+                bool pending_control_message = false;
+                for (auto &item : nonnasa_requests)
+                {
+                   if (item.time_sent > 0 && nonpacket_.src == item.request.dst)
+                   {
+                      pending_control_message = true;
+                      break;
+                   }
+                }
+                // Add checks to ensure pending messages are not overwritten
+                if (!pending_control_message)
+                {
+                    // Publish outdoor temperature if there are no pending control messages
+                    target->set_outdoor_temperature(nonpacket_.src, nonpacket_.commandC0.outdoor_unit_outdoor_temp_c);
+                }
+            }
+            else if (nonpacket_.cmd == NonNasaCommand::CmdF3)
+            {
+                bool pending_control_message = false;
+                for (auto &item : nonnasa_requests)
+                {
+                   if (item.time_sent > 0 && nonpacket_.src == item.request.dst)
+                   {
+                      pending_control_message = true;
+                      break;
+                   }
+                }
+                if (!pending_control_message)
+                {
+                    // Publish power energy if there are no pending control messages
+                    target->set_outdoor_instantaneous_power(nonpacket_.src, nonpacket_.commandF3.inverter_power_w);
+                    target->set_outdoor_cumulative_energy(nonpacket_.src, nonpacket_.commandF3.inverter_total_capacity_requirement_kw);
+                    target->set_outdoor_current(nonpacket_.src, nonpacket_.commandF3.inverter_current_a);
+                    target->set_outdoor_voltage(nonpacket_.src, nonpacket_.commandF3.inverter_voltage_v);
                 }
             }
             else if (nonpacket_.cmd == NonNasaCommand::CmdC6)

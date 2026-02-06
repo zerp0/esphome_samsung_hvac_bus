@@ -465,8 +465,8 @@ namespace esphome
 
             case NonNasaCommand::CmdF3:
                 commandF3.inverter_max_frequency_hz = data[4];
-                commandF3.inverter_total_capacity_requirement_kw = (float)data[5] / 10;
-                commandF3.inverter_current_a = (float)data[8] / 10;
+                commandF3.inverter_total_capacity_requirement_kw = (float)data[5];
+                commandF3.inverter_current_a = (float)data[8];
                 commandF3.inverter_voltage_v = (float)data[9] * 2;
                 commandF3.inverter_power_w = commandF3.inverter_current_a * 0.1f * commandF3.inverter_voltage_v;
                 return {DecodeResultType::Processed, 14};
@@ -905,14 +905,46 @@ namespace esphome
             }
             else if (nonpacket_.cmd == NonNasaCommand::CmdC0)
             {
-                // CmdC0 comes from the outdoor unit and contains outdoor temperature
-                // The temperature is already in Celsius (after subtracting 55 from raw value)
-                // Note: No pending control message check needed here since CmdC0 comes from the
-                // outdoor unit (typically "c8"), while control messages are sent to indoor units.
-                // Outdoor temperature updates are independent status data and should always be processed.
-                // Cast to int8_t first to preserve sign (uint8_t wraps negative values), then to float
-                float temp = static_cast<float>(static_cast<int8_t>(nonpacket_.commandC0.outdoor_unit_outdoor_temp.to_celsius()));
-                target->set_outdoor_temperature(nonpacket_.src, temp);
+                bool pending_control_message = false;
+                for (auto &item : nonnasa_requests)
+                {
+                   if (item.time_sent > 0 && nonpacket_.src == item.request.dst)
+                   {
+                      pending_control_message = true;
+                      break;
+                   }
+                }
+                // Add checks to ensure pending messages are not overwritten
+                if (!pending_control_message)
+                {
+                    // Publish outdoor temperature if there are no pending control messages
+                    // CmdC0 comes from the outdoor unit and contains outdoor temperature
+                    // The temperature is already in Celsius (after subtracting 55 from raw value)
+                    // Cast to int8_t first to preserve sign (uint8_t wraps negative values), then to float
+                    float temp = static_cast<float>(static_cast<int8_t>(nonpacket_.commandC0.outdoor_unit_outdoor_temp.to_celsius()));
+                    target->set_outdoor_temperature(nonpacket_.src, temp);
+                }
+            }
+            else if (nonpacket_.cmd == NonNasaCommand::CmdF3)
+            {
+                bool pending_control_message = false;
+                for (auto &item : nonnasa_requests)
+                {
+                   if (item.time_sent > 0 && nonpacket_.src == item.request.dst)
+                   {
+                      pending_control_message = true;
+                      break;
+                   }
+                }
+                if (!pending_control_message)
+                {
+                    // Publish power energy if there are no pending control messages
+                    target->set_outdoor_instantaneous_power(nonpacket_.src, nonpacket_.commandF3.inverter_power_w);
+                    target->set_outdoor_cumulative_energy(nonpacket_.src, nonpacket_.commandF3.inverter_cumulative_energy_kwh);
+                    target->set_outdoor_capacity(nonpacket_.src, nonpacket_.commandF3.inverter_total_capacity_requirement_kw);
+                    target->set_outdoor_current(nonpacket_.src, nonpacket_.commandF3.inverter_current_a);
+                    target->set_outdoor_voltage(nonpacket_.src, nonpacket_.commandF3.inverter_voltage_v);
+                }
             }
             else if (nonpacket_.cmd == NonNasaCommand::Cmd8D)
             {

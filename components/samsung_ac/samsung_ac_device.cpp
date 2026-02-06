@@ -108,15 +108,15 @@ namespace esphome
       }
 
       auto fanmodeOpt = call.get_fan_mode();
-      const char *custom_fan = call.get_custom_fan_mode();
+      auto custom_fan = call.get_custom_fan_mode();
 
       if (fanmodeOpt.has_value())
       {
         request.fan_mode = climatefanmode_to_fanmode(fanmodeOpt.value());
       }
-      else if (custom_fan != nullptr && custom_fan[0] != '\0')
+      else if (custom_fan.data() != nullptr && custom_fan.length() > 0)
       {
-        request.fan_mode = customfanmode_to_fanmode(custom_fan);
+        request.fan_mode = customfanmode_to_fanmode(custom_fan.c_str());
       }
       else if (mode_changed)
       {
@@ -129,10 +129,10 @@ namespace esphome
         set_alt_mode_by_name(request, preset_to_altmodename(presetOpt.value()));
       }
 
-      const char *custom_preset = call.get_custom_preset();
-      if (custom_preset != nullptr && custom_preset[0] != '\0')
+      auto custom_preset = call.get_custom_preset();
+      if (custom_preset.data() != nullptr && custom_preset.length() > 0)
       {
-        set_alt_mode_by_name(request, AltModeName(custom_preset));
+        set_alt_mode_by_name(request, AltModeName(custom_preset.c_str()));
       }
 
       auto swingModeOpt = call.get_swing_mode();

@@ -938,10 +938,8 @@ namespace esphome
                 }
                 if (!pending_control_message)
                 {
-                    // Publish power energy if there are no pending control messages
+                    // Publish power data if there are no pending control messages
                     target->set_outdoor_instantaneous_power(nonpacket_.src, nonpacket_.commandF3.inverter_power_w);
-                    target->set_outdoor_cumulative_energy(nonpacket_.src, nonpacket_.commandF3.inverter_cumulative_energy_kwh);
-                    target->set_outdoor_capacity(nonpacket_.src, nonpacket_.commandF3.inverter_total_capacity_requirement_kw);
                     target->set_outdoor_current(nonpacket_.src, nonpacket_.commandF3.inverter_current_a);
                     target->set_outdoor_voltage(nonpacket_.src, nonpacket_.commandF3.inverter_voltage_v);
                 }

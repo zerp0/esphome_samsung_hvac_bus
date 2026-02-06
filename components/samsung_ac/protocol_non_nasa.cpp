@@ -74,6 +74,10 @@ namespace esphome
                 tracker.last_power_w = current_power_w;
                 tracker.last_update_time_ms = now;
                 tracker.has_previous_update = true;
+                if (debug_log_messages)
+                {
+                    LOGD("Cmd8D energy tracker initialized for device, initial power=%.1f W", current_power_w);
+                }
                 return false; // No energy calculated on first update
             }
 
@@ -113,6 +117,12 @@ namespace esphome
 
             // Accumulate energy
             tracker.accumulated_energy_kwh += energy_kwh;
+
+            if (debug_log_messages)
+            {
+                LOGD("Cmd8D energy: delta=%u ms, avg_power=%.1f W, energy_delta=%.6f kWh, accumulated=%.3f kWh", 
+                     delta_ms, average_power_w, energy_kwh, tracker.accumulated_energy_kwh);
+            }
 
             // Update tracker state
             tracker.last_power_w = current_power_w;
@@ -927,22 +937,11 @@ namespace esphome
             }
             else if (nonpacket_.cmd == NonNasaCommand::CmdF3)
             {
-                bool pending_control_message = false;
-                for (auto &item : nonnasa_requests)
-                {
-                   if (item.time_sent > 0 && nonpacket_.src == item.request.dst)
-                   {
-                      pending_control_message = true;
-                      break;
-                   }
-                }
-                if (!pending_control_message)
-                {
-                    // Publish power data if there are no pending control messages
-                    target->set_outdoor_instantaneous_power(nonpacket_.src, nonpacket_.commandF3.inverter_power_w);
-                    target->set_outdoor_current(nonpacket_.src, nonpacket_.commandF3.inverter_current_a);
-                    target->set_outdoor_voltage(nonpacket_.src, nonpacket_.commandF3.inverter_voltage_v);
-                }
+                // Publish power data from CmdF3
+                // CmdF3 contains inverter frequency and capacity info, also provides power/current/voltage
+                target->set_outdoor_instantaneous_power(nonpacket_.src, nonpacket_.commandF3.inverter_power_w);
+                target->set_outdoor_current(nonpacket_.src, nonpacket_.commandF3.inverter_current_a);
+                target->set_outdoor_voltage(nonpacket_.src, nonpacket_.commandF3.inverter_voltage_v);
             }
             else if (nonpacket_.cmd == NonNasaCommand::Cmd8D)
             {
